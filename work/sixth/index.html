@@ -16,6 +16,97 @@
   <script src="../../common/js/jquery.js"></script>
   <script>
     // 回答はここに書いてね
+$(function () {
+  //htmlの追加   
+  const wrapper = $('.wrapper');   //変数wrapperを定義
+
+  let failHtml =
+  `
+    <p class="text">逃げられてしまった...</p>
+    <button class="btn mt" data-js="reset">戻る</button>
+  `;
+
+   let encountHtml =
+  `
+    <p class="name"></p>
+    <div>
+      <img class="img" src="" alt="">
+    </div>
+    <div>
+      <button class="btn" id="catch">捕まえる</button>
+      <button class="btn" data-js="reset">逃げる</button>
+    </div>
+  `;
+
+  let doneHtml =
+  `
+    <p class="name">ゲットしました</p>
+    <div>
+      <img class="img" src="" alt="">
+    </div>
+    <button class="btn" data-js="reset">戻る</button>
+  `;
+
+  // 「ポケモンを探す」押下時
+  wrapper.on('click','#pokemon_search',function() {
+    let randomId = Math.floor(Math.random() * 151) +1;        //ランダムIDを定義
+
+    $.ajax({
+      url: `https://pokeapi.co/api/v2/pokemon/${randomId}`,   //テンプレートラテラルでランダムIDを使用
+      method: 'GET'                                           //.ajaxメソッドでpoleapiの情報を取得
+    }).done(function(res) {
+      let EGname = res.name;
+      wrapper.html(encountHtml);                              //encountHtmlを表示し、取得した名前と画像データを挿入
+      
+      $('.name').text(EGname);
+      $('.img').attr('src',res.sprites.front_default);
+  
+      $.ajax({
+        url: res.species.url,
+        method: 'GET'
+      }).done(function(speciesRes) {
+        let JPname = speciesRes.names.find(n => n.language.name === 'ja');
+        if (JPname) {                                        //変数JPnameはjaの要素を持つ（アロー関数n.language.nameはjaに等しい）
+          $('.name').text(JPname.name);                      //.nameクラスにJPnameを表示する
+        }
+      })
+
+      console.log(res.species.url);
+      console.log(res.sprites.front_default);
+    }).fail(function(err) {
+      console.log('error!',err)
+    });
+  });
+
+  
+  // 「捕まえる」ボタン押下時
+  wrapper.on('click','#catch',function() {
+    let success = Math.random() < 0.5;                        //成功率を50％に設定
+
+    if (success) {
+      wrapper.html(doneHtml);                                 //成功の場合doneHtmlが表示される
+
+      $.ajax({
+        url: 'https://pokeapi.co/api/v2/item/4',              //モンスターボールの画像を取得し挿入
+        method: "GET"
+      }).done(function(res){
+        $('.img').attr('src',res.sprites.default);
+        console.log(res.sprites.default);
+      })
+    } else {
+      wrapper.html(failHtml);                                 //失敗の場合はfailHtmlを表示
+    }
+  });
+  
+  
+  // 「戻る」「逃げる」ボタン押下時
+  wrapper.on('click','[data-js = reset]',function(){          //resetデータの要素をクリックした際のイベントの定義
+    let resetHtml = '<button type="button" class="btn search-btn" id="pokemon_search">ポケモンを探す</button>';
+    wrapper.html(resetHtml);
+  });
+  
+
+});
   </script>
 </body>
 </html>
